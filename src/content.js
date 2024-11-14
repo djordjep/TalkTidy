@@ -1,4 +1,5 @@
 console.log('Content script loaded!');
+console.log('content.js script loaded');
 
 // Single message listener for all actions
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
@@ -26,6 +27,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 });
 
 async function getYouTubeTranscript() {
+  console.log('getYouTubeTranscript function called');
   console.log('Starting transcript extraction...');
 
   try {

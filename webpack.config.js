@@ -1,12 +1,14 @@
 const path = require('path');
-const Dotenv = require('dotenv-webpack');
 const CopyPlugin = require('copy-webpack-plugin');
+const Dotenv = require('dotenv-webpack');
+
+require('dotenv').config();
 
 module.exports = {
   entry: {
     background: './src/background.js',
-    popup: './src/popup.js',
     content: './src/content.js',
+    popup: './src/popup.js',
     paywall: './src/paywall.js',
     permissions: './src/permissions.js',
     auth: './src/auth.js',
@@ -18,10 +20,7 @@ module.exports = {
   output: {
     filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
-    module: true,
-    library: {
-      type: 'module'
-    }
+    clean: true,
   },
   resolve: {
     extensions: ['.js']
@@ -35,13 +34,19 @@ module.exports = {
     new CopyPlugin({
       patterns: [
         {
-          from: 'manifest.json',
+          from: 'manifest.src.json',
+          to: 'manifest.json',
           transform(content) {
             return content
               .toString()
-              .replace('process.env.GOOGLE_OAUTH_CLIENT_ID', process.env.GOOGLE_OAUTH_CLIENT_ID);
+              .replace('GOOGLE_OAUTH_CLIENT_ID', process.env.GOOGLE_OAUTH_CLIENT_ID);
           },
         },
+        { from: 'images', to: 'images' },
+        { from: 'popup.html', to: 'popup.html' },
+        { from: 'auth.html', to: 'auth.html' },
+        { from: 'paywall.html', to: 'paywall.html' },
+        { from: 'styles.css', to: 'styles.css' },
       ],
     }),
   ]

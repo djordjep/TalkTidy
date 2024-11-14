@@ -1,9 +1,11 @@
+console.log('Background service worker script loaded'); // Debugging log
+
 // Service worker-specific setup
 // self.importScripts('dist/firebase-app.js', 'dist/firebase-auth.js');
 
 // Instead, import Firebase modules directly
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithCredential, signInWithPopup } from 'firebase/auth';
+import { getAuth, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import { firebaseConfig } from './firebase-config.js';
 
 // Initialize Firebase
@@ -23,7 +25,7 @@ self.addEventListener('activate', event => {
       tabs.forEach(tab => {
         chrome.scripting.executeScript({
           target: { tabId: tab.id },
-          files: ['dist/permissions.js']
+          files: ['permissions.js']
         }).catch(err => console.error('Script injection error:', err));
       });
     }
@@ -45,9 +47,11 @@ self.addEventListener('message', event => {
 // Get Firebase ID token
 async function getIdToken() {
   try {
-    // Get Chrome identity token
+    // Get Chrome identity token with correct parameter structure
     const token = await new Promise((resolve, reject) => {
-      chrome.identity.getAuthToken({ interactive: true }, (token) => {
+      chrome.identity.getAuthToken({ 
+        interactive: true,
+      }, (token) => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
@@ -116,7 +120,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // Handle Google API calls
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === 'GOOGLE_API_REQUEST') {
-    // Handle different types of Google API requests
     switch (request.action) {
       case 'AUTH':
         handleGoogleAuth()
@@ -131,11 +134,54 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function handleGoogleAuth() {
   try {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    return result;
+    console.log('Firebase Config:', firebaseConfig); // Log Firebase config
+    console.log('Extension Client ID:', chrome.runtime.getManifest().oauth2.client_id); // Log OAuth client ID
+
+    // Get Chrome identity token
+    const token = await new Promise((resolve, reject) => {
+      chrome.identity.getAuthToken({ 
+        interactive: true
+      }, (token) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve(token);
+        }
+      });
+    });
+
+    console.log('Got access token:', token.substring(0, 10) + '...'); // Log truncated token
+
+    // Get token info to check audience
+    const tokenInfoResponse = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${token}`);
+    const tokenInfo = await tokenInfoResponse.json();
+    console.log('Token info:', {
+      aud: tokenInfo.aud,
+      azp: tokenInfo.azp,
+      scope: tokenInfo.scope
+    });
+
+    // Create credential with ID token
+    const credential = GoogleAuthProvider.credential(null, token);
+    
+    // Sign in to Firebase with credential
+    const userCredential = await signInWithCredential(auth, credential);
+    console.log('Successfully signed in with credential:', {
+      uid: userCredential.user.uid,
+      providerId: userCredential.providerId
+    });
+    
+    return userCredential;
   } catch (error) {
     console.error('Auth Error:', error);
+    // Log more details about the error
+    if (error.code === 'auth/invalid-credential') {
+      console.error('Invalid credential details:', {
+        code: error.code,
+        message: error.message,
+        customData: error.customData
+      });
+    }
     throw error;
   }
 }

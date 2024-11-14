@@ -70,3 +70,9 @@ node_modules/
 
 # Webpack build output
 dist/
+
+# Manifest file
+manifest.json
+
+# Build directory
+/build

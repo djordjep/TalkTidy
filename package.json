@@ -5,7 +5,8 @@
   "main": "background.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --config webpack.config.js",
+    "build": "webpack --mode production",
+    "dev": "webpack --mode development --watch",
     "watch": "webpack --config webpack.config.js --watch"
   },
   "keywords": [],
@@ -17,6 +18,9 @@
     "firebase": "^11.0.1"
   },
   "devDependencies": {
+    "copy-webpack-plugin": "^11.0.0",
+    "dotenv": "^16.3.1",
+    "dotenv-webpack": "^8.0.1",
     "webpack": "^5.96.1",
     "webpack-cli": "^5.1.4"
   }
