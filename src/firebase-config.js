@@ -4,6 +4,5 @@ export const firebaseConfig = {
   projectId: process.env.FIREBASE_PROJECT_ID,
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.FIREBASE_APP_ID,
-  customTokenEndpoint: 'https://us-central1-talktidy-ab88f.cloudfunctions.net/createCustomToken'
+  appId: process.env.FIREBASE_APP_ID
 }; 

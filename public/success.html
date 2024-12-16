@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Successful</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background-color: #f0fff4; 
+            font-family: Arial, sans-serif; 
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            background: #e6ffed;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .container h1 { color: #38a169; }
+        .container p { margin-top: 20px; }
+        .container button {
+            margin-top: 30px;
+            padding: 10px 20px;
+            background-color: #38a169;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .container button:hover {
+            background-color: #2f855a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Payment Successful!</h1>
+        <p>Thank you for your purchase. Your subscription has been activated.</p>
+        <button onclick="navigateToExtension()">Return to Extension</button>
+    </div>
+
+    <script>
+        function navigateToExtension() {
+            alert('Please return to the Chrome extension to continue using premium features.');
+            window.close(); // Attempt to close the tab
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,18 @@
+#payment-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.loading {
+    color: #666;
+    font-size: 16px;
+}
+
+.error {
+    color: #dc3545;
+    padding: 10px;
+    border: 1px solid #dc3545;
+    border-radius: 4px;
+}

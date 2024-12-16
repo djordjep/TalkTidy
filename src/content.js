@@ -5,12 +5,6 @@ console.log('content.js script loaded');
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   console.log('Message received in content script:', request);
   
-  if (request.test === 'hello') {
-    console.log('Received test message');
-    sendResponse({ received: true });
-    return false; // No need to keep channel open for sync response
-  }
-  
   if (request.action === "getTranscript") {
     console.log('Starting transcript extraction process...');
     getYouTubeTranscript()
@@ -35,9 +29,14 @@ async function getYouTubeTranscript() {
     const titleElement = document.querySelector('h1.style-scope.ytd-watch-metadata yt-formatted-string');
     const videoTitle = titleElement ? titleElement.textContent.trim() : 'Untitled Video';
     
-    // Get video URL
+    // Get video URL and extract video ID
     const videoUrl = window.location.href;
+    const videoId = new URL(videoUrl).searchParams.get('v');
     
+    if (!videoId) {
+      throw new Error('Could not extract video ID from URL');
+    }
+
     // Scroll to the description area
     const descriptionArea = document.querySelector('#description');
     if (descriptionArea) {
@@ -128,6 +127,7 @@ ${transcriptText}`;
     return {
       title: videoTitle,
       url: videoUrl,
+      videoId: videoId,
       transcript: formattedOutput
     };
 
@@ -168,23 +168,4 @@ function waitForElement(selector, timeout = 5000) {
       reject(new Error(`Timeout waiting for ${selector}`));
     }, timeout);
   });
-}
-
-// Example of sending transcript to background script
-async function sendTranscriptForProcessing(transcript) {
-  try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'processTranscript',
-      transcript: transcript
-    });
-    
-    if (!response.success) {
-      throw new Error(response.error);
-    }
-    
-    return response.data;
-  } catch (error) {
-    console.error('Error processing transcript:', error);
-    throw error;
-  }
 }

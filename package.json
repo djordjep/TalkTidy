@@ -15,6 +15,7 @@
   "dependencies": {
     "@firebase/app": "^0.10.15",
     "@firebase/auth": "^1.8.0",
+    "@stripe/stripe-js": "^5.0.0",
     "firebase": "^11.0.1"
   },
   "devDependencies": {

@@ -76,3 +76,9 @@ manifest.json
 
 # Build directory
 /build
+
+# Sensitive files
+public/secure-payment.js
+
+# Functions environment variables file
+functions/.env

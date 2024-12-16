@@ -4,20 +4,51 @@ import { auth } from './firebase-init.js';
 
 console.log('popup.js script loaded'); // Debugging log
 
-document.addEventListener('DOMContentLoaded', function() {
-  // Get DOM elements
-  const getTranscriptBtn = document.getElementById('getTranscript');
-  const copyTranscriptBtn = document.getElementById('copyTranscript');
-  const getSummaryBtn = document.getElementById('getSummary');
-  const statusDiv = document.getElementById('status');
-  const transcriptionDiv = document.getElementById('transcription');
-  const signInButton = document.getElementById('signInButton');
-  const signInSection = document.getElementById('signInSection');
+document.addEventListener('DOMContentLoaded', async function() {
+  // Get DOM elements with null checks
+  const elements = {
+    getTranscriptBtn: document.getElementById('getTranscript'),
+    copyTranscriptBtn: document.getElementById('copyTranscript'),
+    getSummaryBtn: document.getElementById('getSummary'),
+    statusDiv: document.getElementById('status'),
+    transcriptionDiv: document.getElementById('transcription'),
+    signInButton: document.getElementById('signInButton'),
+    signInSection: document.getElementById('signInSection'),
+    mainContainer: document.getElementById('mainContainer'),
+    nonYoutubeMessage: document.getElementById('nonYoutubeMessage')
+  };
 
   // Verify all required elements exist
-  if (!getTranscriptBtn || !copyTranscriptBtn || !getSummaryBtn || 
-      !statusDiv || !transcriptionDiv || !signInButton || !signInSection) {
-    console.error('Required DOM elements not found. Check popup.html for missing elements.');
+  const missingElements = Object.entries(elements)
+    .filter(([key, element]) => !element)
+    .map(([key]) => key);
+
+  if (missingElements.length > 0) {
+    console.error('Missing required elements:', missingElements);
+    return;
+  }
+
+  // Now you can safely use the elements
+  const {
+    getTranscriptBtn,
+    copyTranscriptBtn,
+    getSummaryBtn,
+    statusDiv,
+    transcriptionDiv,
+    signInButton,
+    signInSection,
+    mainContainer,
+    nonYoutubeMessage
+  } = elements;
+
+  // Check if current tab is YouTube
+  const currentTab = await getCurrentTab();
+  const isYouTube = currentTab?.url?.includes('youtube.com/watch');
+
+  if (!isYouTube) {
+    // Hide main container and show message for non-YouTube sites
+    mainContainer.style.display = 'none';
+    nonYoutubeMessage.style.display = 'block';
     return;
   }
 
@@ -26,6 +57,10 @@ document.addEventListener('DOMContentLoaded', function() {
   copyTranscriptBtn.style.display = 'none';
 
   function showStatus(message, isError = false) {
+    if (!statusDiv) {
+      console.error('Status div not found');
+      return;
+    }
     statusDiv.textContent = message;
     statusDiv.style.display = 'block';
     statusDiv.className = isError ? 'error' : 'success';
@@ -35,29 +70,52 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Update UI based on auth state
   function updateUIBasedOnAuth() {
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
-        console.log('User is signed in:', user.email); // Debugging log
-        // Check if the user has a premium subscription
-        checkUserAuthorization(user.uid)
-          .then(isAuthorized => {
-            if (isAuthorized) {
-              getSummaryBtn.style.display = 'block';
-              getSummaryBtn.disabled = !transcriptionDiv.textContent;
-              document.getElementById('signInSection').style.display = 'none';
-            } else {
-              getSummaryBtn.style.display = 'none';
-              document.getElementById('signInSection').style.display = 'block';
+        console.log('User is signed in:', user.email);
+        
+        document.getElementById('signInSection').style.display = 'none';
+        document.getElementById('signOutButton').style.display = 'block';
+        
+        try {
+          const isAuthorized = await checkUserAuthorization(user.uid);
+          if (isAuthorized) {
+            getSummaryBtn.style.display = 'block';
+            getSummaryBtn.disabled = !transcriptionDiv.textContent;
+          } else {
+            getSummaryBtn.style.display = 'none';
+            // Only open paywall if user has no credits
+            if (!window.paywallWindowOpen) {
+              window.paywallWindowOpen = true;
+              chrome.windows.create({
+                url: chrome.runtime.getURL('paywall.html'),
+                type: 'popup',
+                width: 460,
+                height: 600
+              }, (window) => {
+                const checkWindow = setInterval(() => {
+                  chrome.windows.get(window.id, () => {
+                    if (chrome.runtime.lastError) {
+                      clearInterval(checkWindow);
+                      window.paywallWindowOpen = false;
+                    }
+                  });
+                }, 1000);
+              });
             }
-          })
-          .catch(error => {
-            console.error('Authorization check failed:', error);
-            showStatus('Authorization check failed. Please try again.', true);
-          });
+          }
+        } catch (error) {
+          console.error('Authorization check failed:', error);
+          showStatus('Authorization check failed. Please try again.', true);
+        }
       } else {
-        console.log('User is signed out'); // Debugging log
-        getSummaryBtn.style.display = 'none';
+        console.log('User is signed out');
+        
         document.getElementById('signInSection').style.display = 'block';
+        
+        document.getElementById('signOutButton').style.display = 'none';
+        
+        getSummaryBtn.style.display = 'none';
       }
     });
   }
@@ -86,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
           chrome.windows.create({
             url: chrome.runtime.getURL('paywall.html'),
             type: 'popup',
-            width: 400,
+            width: 420,
             height: 600
           });
         }
@@ -97,27 +155,69 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Handle summary request
+  // Add this helper function near the getCurrentTab function
+  function getYouTubeVideoId(url) {
+    const urlObj = new URL(url);
+    const searchParams = new URLSearchParams(urlObj.search);
+    return searchParams.get('v');
+  }
+
+  // Update the handleSummaryRequest function
   async function handleSummaryRequest() {
+    if (!getSummaryBtn || !transcriptionDiv) {
+      console.error('Required elements not found');
+      return;
+    }
+
     try {
       const user = auth.currentUser;
       if (!user) {
-        // Show sign-in section if not authenticated
-        document.getElementById('signInSection').style.display = 'block';
+        const signInSection = document.getElementById('signInSection');
+        if (signInSection) {
+          signInSection.style.display = 'block';
+        }
         showStatus('Please sign in to access the summary feature.', true);
         return;
       }
 
-      // Check if the user has a premium subscription
+      // Get current tab and video ID
+      const currentTab = await getCurrentTab();
+      const videoId = getYouTubeVideoId(currentTab.url);
+      
+      if (!videoId) {
+        throw new Error('Could not find YouTube video ID');
+      }
+
+      // Add loading state to button
+      getSummaryBtn.innerHTML = '<span class="spinner"></span> Processing...';
+      
+      // Rest of the existing validation code...
+      const transcriptLength = transcriptionDiv.textContent?.length || 0;
+      if (transcriptLength > 400000) { // ~100k words
+        showStatus('Transcript too long. Please try a shorter video.', true);
+        return;
+      }
+
       const isAuthorized = await checkUserAuthorization(user.uid);
       if (!isAuthorized) {
-        // Show paywall for unauthorized users
-        chrome.windows.create({
-          url: chrome.runtime.getURL('paywall.html'),
-          type: 'popup',
-          width: 400,
-          height: 600
-        });
+        if (!window.paywallWindowOpen) {
+          window.paywallWindowOpen = true;
+          chrome.windows.create({
+            url: chrome.runtime.getURL('paywall.html'),
+            type: 'popup',
+            width: 420,
+            height: 600
+          }, (window) => {
+            const checkWindow = setInterval(() => {
+              chrome.windows.get(window.id, () => {
+                if (chrome.runtime.lastError) {
+                  clearInterval(checkWindow);
+                  window.paywallWindowOpen = false;
+                }
+              });
+            }, 1000);
+          });
+        }
         return;
       }
 
@@ -127,40 +227,87 @@ document.addEventListener('DOMContentLoaded', function() {
       showStatus('Processing transcript...');
       getSummaryBtn.disabled = true;
 
-      const response = await fetch(process.env.FIREBASE_FUNCTION_URL, {
+      const functionUrl = process.env.FIREBASE_FUNCTION_URL + '/processTranscript';
+      console.log('Calling Firebase function at:', functionUrl);
+
+      const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${idToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          transcript: transcriptionDiv.textContent
+          transcript: transcriptionDiv.textContent,
+          videoId: videoId  // Include videoId in the request
         })
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        let errorMessage;
+        const responseText = await response.text();
+        
+        try {
+          const errorData = JSON.parse(responseText);
+          if (errorData.code === 'CLAUDE_CREDITS_EXHAUSTED') {
+            errorMessage = 'Service is temporarily unavailable. Please try again in a few minutes.';
+          } else {
+            errorMessage = errorData.error || 'Failed to process transcript';
+          }
+        } catch (e) {
+          console.error('Non-JSON error response:', responseText);
+          errorMessage = `Server error (${response.status}). Please try again later.`;
+        }
+        
         if (response.status === 403) {
           // Subscription required
           chrome.windows.create({
             url: chrome.runtime.getURL('paywall.html'),
             type: 'popup',
-            width: 400,
+            width: 420,
             height: 600
           });
           return;
         }
-        throw new Error(error.error || 'Failed to process transcript');
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
-      transcriptionDiv.textContent = data.response;
-      showStatus('Summary generated successfully!');
+      try {
+        const data = await response.json();
+        console.log('Received data from server:', data);
+        
+        // Verify transcriptionDiv exists
+        if (!transcriptionDiv) {
+          throw new Error('Transcript display element not found');
+        }
 
+        // Check if we have the expected data structure
+        if (!data.response) {
+          throw new Error('Invalid response format from server');
+        }
+
+        // Add summary metadata with provider information
+        const providerName = data.provider === 'claude' ? 'Claude AI' : 'GPT-4';
+        transcriptionDiv.textContent = 
+          `Summary generated by ${providerName} on ${new Date().toLocaleString()}:\n\n${data.response}`;
+        
+        // Safely update credits display if element exists
+        const creditsDisplay = document.getElementById('creditsDisplay');
+        if (creditsDisplay && data.creditsRemaining !== undefined) {
+          creditsDisplay.textContent = `Credits remaining: ${data.creditsRemaining}`;
+        }
+
+        showStatus('Summary generated successfully!');
+      } catch (error) {
+        console.error('Error handling response:', error);
+        showStatus(`Error: ${error.message}. Please try again.`, true);
+        throw error;
+      } finally {
+        getSummaryBtn.disabled = false;
+        getSummaryBtn.innerHTML = 'Get Summary';
+      }
     } catch (error) {
-      showStatus(`Error: ${error.message}`, true);
-    } finally {
-      getSummaryBtn.disabled = false;
+      console.error('Summary request error:', error);
+      showStatus(`Error: ${error.message || 'Failed to process summary'}. Please try again.`, true);
     }
   }
 
@@ -241,6 +388,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
   getSummaryBtn.addEventListener('click', handleSummaryRequest);
 
+  // Add event listener for Sign Out button
+  document.getElementById('signOutButton').addEventListener('click', async () => {
+    try {
+      await auth.signOut();
+      console.log('User signed out successfully');
+      
+      // Send message to background script to remove cached token
+      await chrome.runtime.sendMessage({ type: 'REMOVE_CACHED_TOKEN' });
+      
+      updateUIBasedOnAuth();
+    } catch (error) {
+      console.error('Sign Out Error:', error);
+      alert('Sign out failed. Please try again.');
+    }
+  });
+
   // Initialize UI
   updateUIBasedOnAuth();
 
@@ -267,13 +430,9 @@ async function handleGoogleAuth() {
   }
 }
 
-// Update the checkUserAuthorization function with more logging
+// Update the checkUserAuthorization function to handle the response
 async function checkUserAuthorization(userId) {
   try {
-    // Log the user ID being checked
-    console.log('Checking authorization for user:', userId);
-    
-    // Get and log the ID token
     const idToken = await auth.currentUser.getIdToken();
     console.log('Got ID token:', idToken.substring(0, 10) + '...');
     
@@ -289,30 +448,65 @@ async function checkUserAuthorization(userId) {
       body: JSON.stringify({ uid: userId })
     });
 
-    console.log('Response status:', response.status);
-    
     if (!response.ok) {
-      // Try to get error details from response
-      try {
-        const errorData = await response.json();
-        console.error('Error response data:', errorData);
-        throw new Error(`Authorization check failed: ${JSON.stringify(errorData)}`);
-      } catch (parseError) {
-        console.error('Could not parse error response:', parseError);
-        throw new Error(`Authorization check failed with status: ${response.status}`);
-      }
+      throw new Error(`Authorization check failed with status: ${response.status}`);
     }
 
     const data = await response.json();
     console.log('Authorization check result:', data);
+    
+    // Store the credits count in local state if needed
+    if (data.credits !== undefined) {
+      // You might want to display this somewhere in the UI
+      console.log(`User has ${data.credits} credits remaining`);
+    }
+
     return data.isAuthorized;
   } catch (error) {
     console.error('Error checking authorization:', error);
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
     throw error;
+  }
+}
+
+// Update the openPaywall function to properly encode the token
+async function openPaywall() {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get a fresh ID token
+    const idToken = await user.getIdToken(true);
+    
+    // Properly encode the token for URL
+    const encodedToken = encodeURIComponent(idToken);
+    
+    if (!window.paywallWindowOpen) {
+      window.paywallWindowOpen = true;
+      const paywallUrl = chrome.runtime.getURL('paywall.html') + 
+        `?token=${encodedToken}&timestamp=${Date.now()}`; // Add timestamp to prevent caching
+      
+      console.log('Opening paywall with encoded token');
+      
+      chrome.windows.create({
+        url: paywallUrl,
+        type: 'popup',
+        width: 460,
+        height: 640
+      }, (window) => {
+        const checkWindow = setInterval(() => {
+          chrome.windows.get(window.id, () => {
+            if (chrome.runtime.lastError) {
+              clearInterval(checkWindow);
+              window.paywallWindowOpen = false;
+            }
+          });
+        }, 1000);
+      });
+    }
+  } catch (error) {
+    console.error('Error opening paywall:', error);
+    showStatus('Failed to open payment window. Please try again.', true);
   }
 }

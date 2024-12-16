@@ -1,7 +1,10 @@
 body {
   width: 400px;
+  height: 450px;
   padding: 15px;
-  font-family: Arial, sans-serif;
+  font-family: Roboto, Arial, sans-serif;
+  background-color: #0f0f0f;
+  color: #fff;
 }
 
 .container {
@@ -51,6 +54,7 @@ body {
   margin-top: 10px;
   padding: 10px;
   border-radius: 4px;
+  background-color: #272727;
 }
 
 #transcription {
@@ -58,19 +62,21 @@ body {
   max-height: 300px;
   overflow-y: auto;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #3f3f3f;
   border-radius: 4px;
   white-space: pre-wrap;
+  background-color: #272727;
+  color: #fff;
 }
 
 .success {
-  background-color: #e6ffe6;
-  color: #006600;
+  background-color: #238636;
+  color: #ffffff;
 }
 
 .error {
-  background-color: #ffe6e6;
-  color: #660000;
+  background-color: #da3633;
+  color: #ffffff;
 }
 
 #getSummary,
@@ -96,8 +102,9 @@ body {
   transform: translateX(-50%);
   padding: 5px;
   border-radius: 4px;
-  background-color: #333;
-  color: white;
+  background-color: #272727;
+  border: 1px solid #3f3f3f;
+  color: #fff;
   font-size: 12px;
   white-space: nowrap;
   opacity: 0;
@@ -107,4 +114,162 @@ body {
 
 .button:disabled:hover::before {
   opacity: 1;
+}
+
+.button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+  position: relative;
+}
+
+/* Remove the lock emoji for the Get Summary button specifically */
+#getSummary:disabled::after {
+  content: none;
+}
+
+/* Keep the lock emoji for other disabled buttons if needed */
+.button:disabled::after {
+  content: '🔒';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.pricing-container {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  margin: 2rem auto;
+  max-width: 900px;
+}
+
+.pricing-card {
+  flex: 1;
+  max-width: 300px;
+  position: relative;
+  background-color: #272727;
+  border: 1px solid #3f3f3f;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.pricing-card.featured {
+  transform: scale(1.05);
+  border: 2px solid #3ea6ff;
+}
+
+.best-value {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #3ea6ff;
+  color: #0f0f0f;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: bold;
+}
+
+.button.primary {
+  background: #3ea6ff;
+  color: #0f0f0f;
+}
+
+.price {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+  margin: 1rem 0;
+}
+
+/* Add this specific style for paywall */
+.paywall-body {
+  width: 420px;
+  padding: 15px;
+  font-family: Arial, sans-serif;
+  background-color: #0f0f0f;
+  color: #fff;
+}
+
+.message-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  gap: 1rem;
+}
+
+.message-container .logo {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+}
+
+.message-container h3 {
+  color: #fff;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.message-container p {
+  color: #aaa;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Adjust the button style for the non-YouTube message */
+.message-container .button {
+  background-color: #ff0000;
+  padding: 8px 20px;
+  margin-top: 1rem;
+}
+
+.message-container .button:hover {
+  background-color: #cc0000;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+#creditsDisplay {
+  text-align: right;
+  font-size: 0.9em;
+  color: #aaa;
+  margin-top: 8px;
+}
+
+/* Add scrollbar styling for the dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #272727;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3f3f3f;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 } 

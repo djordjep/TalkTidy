@@ -5,23 +5,36 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <h2>YouTube Transcription Helper</h2>
-    
-    <!-- Transcript Section -->
-    <button id="getTranscript" class="button">Get Video Transcript</button>
-    <div id="status"></div>
-    <div id="transcription"></div>
-    <button id="copyTranscript" class="button">Copy Transcript</button>
-    <button id="getSummary" class="button">Get Summary</button>
-
-    <!-- Sign In Section -->
-    <div id="signInSection">
-      <button id="signInButton" class="button">Sign in with Google</button>
-      <div id="userInfo"></div>
+  <!-- Add non-YouTube message div -->
+  <div id="nonYoutubeMessage" style="display: none;">
+    <div class="message-container">
+      <img src="images/icon48.png" alt="TalkTidy Logo" class="logo">
+      <h3>Please Navigate to YouTube</h3>
+      <p>This extension only works on YouTube video pages. Please open a YouTube video to use TalkTidy's features.</p>
+      <button onclick="window.open('https://youtube.com')" class="button">Go to YouTube</button>
     </div>
   </div>
-  
+
+  <!-- Wrap existing content in a container -->
+  <div id="mainContainer">
+    <div class="container">
+      <h2>YouTube Transcription Helper</h2>
+      
+      <!-- Transcript Section -->
+      <button id="getTranscript" class="button">Get Video Transcript</button>
+      <div id="status"></div>
+      <div id="transcription"></div>
+      <button id="copyTranscript" class="button">Copy Transcript</button>
+      <button id="getSummary" class="button">Get Summary</button>
+
+      <!-- Sign In Section -->
+      <div id="signInSection">
+        <button id="signInButton" class="button">Sign in with Google</button>
+        <div id="userInfo"></div>
+      </div>
+      <button id="signOutButton" class="auth-button">Sign Out</button>
+    </div>
+  </div>
   <script src="popup.js" type="module"></script>
 </body>
 </html>

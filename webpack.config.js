@@ -8,10 +8,9 @@ module.exports = {
   entry: {
     background: './src/background.js',
     content: './src/content.js',
+    auth: './src/auth.js',
     popup: './src/popup.js',
     paywall: './src/paywall.js',
-    permissions: './src/permissions.js',
-    auth: './src/auth.js',
     'firebase-app': './node_modules/firebase/app',
     'firebase-auth': './node_modules/firebase/auth',
     'firebase-init': './src/firebase-init.js',
@@ -26,11 +25,18 @@ module.exports = {
     extensions: ['.js']
   },
   mode: 'production',
+  devtool: 'source-map',
+  optimization: {
+    minimize: true
+  },
   experiments: {
     outputModule: true,
   },
   plugins: [
-    new Dotenv(),
+    new Dotenv({
+      systemvars: true,
+      safe: true
+    }),
     new CopyPlugin({
       patterns: [
         {

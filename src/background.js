@@ -185,3 +185,32 @@ async function handleGoogleAuth() {
     throw error;
   }
 }
+// Listen for messages from popup.js
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'REMOVE_CACHED_TOKEN') {
+    // Attempt to get the current auth token without prompting the user
+    chrome.identity.getAuthToken({ interactive: false }, (token) => {
+      if (chrome.runtime.lastError) {
+        console.error('Error getting auth token:', chrome.runtime.lastError);
+        sendResponse({ success: false, error: chrome.runtime.lastError });
+        return;
+      }
+      
+      if (token) {
+        // Remove the cached auth token
+        chrome.identity.removeCachedAuthToken({ token }, () => {
+          console.log('Cached auth token removed.');
+          sendResponse({ success: true });
+        });
+      } else {
+        // No token found, respond with success
+        sendResponse({ success: true });
+      }
+    });
+    
+    // Indicates that the response will be sent asynchronously
+    return true;
+  }
+
+  // ... existing message handlers ...
+});

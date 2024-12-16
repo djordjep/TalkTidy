@@ -4,19 +4,39 @@
   <title>Upgrade - TalkTidy</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <h2>Upgrade to Pro</h2>
-  <p>Get unlimited AI-powered summaries</p>
-  
-  <div class="pricing-card">
-    <h3>Pro Plan</h3>
-    <p>$9.99/month</p>
-    <ul>
-      <li>Unlimited summaries</li>
-      <li>AI-powered insights</li>
-      <li>Priority support</li>
-    </ul>
-    <button id="signInWithGoogle" class="auth-button">Sign in with Google</button>
+<body class="paywall-body">
+  <div class="container">
+    <h2>Choose Your Plan</h2>
+    <p>Get AI-powered summaries that fit your needs</p>
+    
+    <div class="pricing-container">
+      <div class="pricing-card">
+        <h3>Single Summary</h3>
+        <p class="price">$1.00</p>
+        <ul class="features">
+          <li>✓ 1 AI summary</li>
+          <li>✓ Valid for 30 days</li>
+          <li>✓ Basic support</li>
+        </ul>
+        <button id="singlePaymentButton" class="button" data-plan="single">
+          Buy Now
+        </button>
+      </div>
+
+      <div class="pricing-card featured">
+        <div class="best-value">Best Value</div>
+        <h3>Summary Pack</h3>
+        <p class="price">$5.00</p>
+        <ul class="features">
+          <li>✓ 8 AI summaries</li>
+          <li>✓ Valid for 30 days</li>
+          <li>✓ Priority support</li>
+        </ul>
+        <button id="packPaymentButton" class="button primary" data-plan="pack">
+          Buy Now
+        </button>
+      </div>
+    </div>
   </div>
 
   <script src="paywall.js" type="module"></script>
