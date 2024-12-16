@@ -82,3 +82,7 @@ public/secure-payment.js
 
 # Functions environment variables file
 functions/.env
+
+# Chrome Extension packaging
+*.crx
+*.pem
